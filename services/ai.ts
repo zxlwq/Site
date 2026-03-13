@@ -64,6 +64,38 @@ const callBackendAI = async (
   return json.text ?? "";
 };
 
+const cleanShortChineseDescription = (text: string): string => {
+  const noMd = text
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/`[^`]*`/g, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .trim();
+
+  // 去掉常见标点与换行空格
+  const noPunc = noMd
+    .replace(/[\r\n\t]/g, " ")
+    .replace(/[，。！？、；：,.!?:;'"“”‘’（）()【】[\]<>《》]/g, "")
+    .replace(/\s+/g, "");
+
+  return noPunc.slice(0, 15);
+};
+
+export const generateLinkDescription = async (
+  provider: AIProvider,
+  title: string,
+  url: string
+): Promise<string> => {
+  const prompt = `请根据以下网站信息，生成一个非常简短的中文描述（不超过15个字，不要包含标点符号，不要换行）：
+网站标题: ${title || "（空）"}
+网站链接: ${url || "（空）"}
+
+只输出描述文本：`;
+
+  const text = await callBackendAI(provider, [], prompt);
+  return cleanShortChineseDescription(text);
+};
+
 // ===== 对外统一入口 =====
 
 export async function* sendMessageStream(

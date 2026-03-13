@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { LinkItem } from '../types';
+import { AIProvider, LinkItem } from '../types';
 import Icon from './Icon';
-import { generateLinkDescription } from '../services/gemini';
+import { generateLinkDescription, DEFAULT_AI_PROVIDER } from '../services/ai';
 
 interface LinkModalProps {
   isOpen: boolean;
@@ -40,7 +40,12 @@ const LinkModal: React.FC<LinkModalProps> = ({ isOpen, link, onClose, onSave }) 
 
     setIsGenerating(true);
     try {
-      const desc = await generateLinkDescription(formData.title, formData.url);
+      const savedProvider = typeof window !== 'undefined' ? window.localStorage.getItem('ai_provider') : null;
+      const provider = (savedProvider && Object.values(AIProvider).includes(savedProvider as AIProvider))
+        ? (savedProvider as AIProvider)
+        : DEFAULT_AI_PROVIDER;
+
+      const desc = await generateLinkDescription(provider, formData.title, formData.url);
       if (desc) {
         setFormData(prev => ({ ...prev, description: desc }));
       } else {
